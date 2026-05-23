@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Gastos - KRD Studio</title>
+
+  <!-- Ícone oficial do aplicativo
+  Coloque a imagem do logo do app na mesma pasta deste HTML com o nome: app-icon.png -->
+  <link rel="icon" type="image/png" href="app-icon.png" />
+  <link rel="shortcut icon" type="image/png" href="app-icon.png" />
+  <link rel="apple-touch-icon" href="app-icon.png" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Controle de Gastos" />
+  <meta name="application-name" content="Controle de Gastos" />
+
+  <!-- Bibliotecas para exportação em PDF e imagem -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #0f172a;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: auto;
+      background: #f8fafc;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    header {
+      background: linear-gradient(135deg, #111827, #2563eb);
+      color: white;
+      padding: 28px 22px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: clamp(1.7rem, 4vw, 2.7rem);
+      margin-bottom: 8px;
+    }
+
+    header p {
+      opacity: 0.92;
+      font-size: 1rem;
+    }
+
+    .app-title-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .app-icon-header {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      object-fit: cover;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      background: white;
+    }
+
+    main {
+      padding: 22px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e2e8f0;
+    }
+
+    .card h2 {
+      margin-bottom: 14px;
+      font-size: 1.25rem;
+      color: #1e293b;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    label {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #334155;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 1rem;
+      outline: none;
+      background: #f8fafc;
+    }
+
+    input:focus, select:focus {
+      border-color: #2563eb;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(0.96);
+    }
+
+    .primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .success {
+      background: #16a34a;
+      color: white;
+    }
+
+    .warning {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .muted {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .table-area {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+      background: white;
+    }
+
+    th {
+      background: #1e293b;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+
+    td {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 11px;
+      font-size: 0.95rem;
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    .total-box {
+      margin-top: 18px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      padding: 18px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .total-box strong {
+      font-size: 1.5rem;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 28px;
+      color: #64748b;
+      background: #f8fafc;
+      border-radius: 14px;
+      border: 1px dashed #cbd5e1;
+    }
+
+    footer {
+      background: #020617;
+      color: white;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .brand {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .logo-placeholder {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #2563eb, #9333ea);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .small {
+      font-size: 0.83rem;
+      opacity: 0.78;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 820px) {
+      body {
+        padding: 10px;
+      }
+
+      main {
+        padding: 14px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .buttons button {
+        width: 100%;
+      }
+
+      .total-box {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+
+      .app {
+        box-shadow: none;
+        border-radius: 0;
+      }
+
+      .form-card, .export-buttons, .actions-col {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="areaExportacao">
+    <header>
+      <div class="app-title-logo">
+        <img src="app-icon.png" alt="Logo do aplicativo Controle de Gastos" class="app-icon-header" onerror="this.style.display='none'">
+        <h1>Controle de Gastos</h1>
+      </div>
+      <p>Cadastre produtos, calcule subtotais e exporte sua tabela em PDF ou imagem.</p>
+    </header>
+
+    <main>
+      <section class="card form-card">
+        <h2>Cadastrar Novo Controle de Gastos</h2>
+
+        <div class="grid">
+          <div>
+            <label for="nomeControle">Nome do controle</label>
+            <input id="nomeControle" type="text" placeholder="Ex: Gasto de Bar" />
+          </div>
+
+          <div>
+            <label for="tipoGasto">Tipo de gasto</label>
+            <select id="tipoGasto">
+              <option value="Bar">Gasto de Bar</option>
+              <option value="Mercado">Mercado</option>
+              <option value="Evento">Evento</option>
+              <option value="Casa">Casa</option>
+              <option value="Escola">Escola</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="dataControle">Data</label>
+            <input id="dataControle" type="date" />
+          </div>
+
+          <div>
+            <label for="observacao">Observação</label>
+            <input id="observacao" type="text" placeholder="Opcional" />
+          </div>
+        </div>
+      </section>
+
+      <section class="card form-card">
+        <h2>Cadastrar Produto</h2>
+
+        <div class="grid">
+          <div>
+            <label for="unidade">UND</label>
+            <input id="unidade" type="number" min="1" step="1" placeholder="Ex: 3" />
+          </div>
+
+          <div>
+            <label for="produto">Produto</label>
+            <input id="produto" type="text" placeholder="Ex: Refrigerante" />
+          </div>
+
+          <div>
+            <label for="valorUnitario">Valor unitário</label>
+            <input id="valorUnitario" type="number" min="0" step="0.01" placeholder="Ex: 25,00" />
+          </div>
+
+          <div>
+            <label>Subtotal automático</label>
+            <input id="subtotalPreview" type="text" disabled placeholder="R$ 0,00" />
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button class="primary" onclick="adicionarItem()">Adicionar Produto</button>
+          <button class="muted" onclick="limparCamposProduto()">Limpar Campos</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 id="tituloTabela">Tabela de Gastos</h2>
+        <p id="infoControle" class="small"></p>
+
+        <div id="conteudoTabela">
+          <div class="empty">Nenhum produto cadastrado ainda.</div>
+        </div>
+
+        <div class="total-box">
+          <span>Total gasto por inteiro</span>
+          <strong id="totalGeral">R$ 0,00</strong>
+        </div>
+
+        <div class="buttons export-buttons">
+          <button class="success" onclick="exportarPDF()">Exportar em PDF</button>
+          <button class="warning" onclick="exportarImagem()">Exportar em Imagem</button>
+          <button class="danger" onclick="limparTudo()">Limpar Tudo</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="brand">
+        <!-- COLOQUE O ARQUIVO DO LOGO NA MESMA PASTA DO HTML COM O NOME: logo-krd.png -->
+        <img src="logo-krd.png" alt="Logo KRD Studio" style="width:60px; height:60px; object-fit:cover; border-radius:14px; background:white; padding:4px;">
+        <div>
+          <strong>KRD Studio</strong>
+          <div class="small">Aplicativo desenvolvido para controle de gastos</div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Manifest criado dentro do próprio HTML para permitir instalação como app/PWA.
+    // O arquivo app-icon.png precisa estar na mesma pasta do HTML.
+    const manifest = {
+      name: 'Controle de Gastos',
+      short_name: 'Gastos',
+      description: 'Aplicativo para controle de gastos com exportação em PDF e imagem.',
+      start_url: './',
+      display: 'standalone',
+      background_color: '#0f172a',
+      theme_color: '#0f172a',
+      orientation: 'portrait-primary',
+      icons: [
+        {
+          src: 'app-icon.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any maskable'
+        },
+        {
+          src: 'app-icon.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any maskable'
+        }
+      ]
+    };
+
+    const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    const manifestLink = document.createElement('link');
+    manifestLink.rel = 'manifest';
+    manifestLink.href = manifestURL;
+    document.head.appendChild(manifestLink);
+
+    let itens = JSON.parse(localStorage.getItem('controleGastosItens')) || [];
+
+    const moedaBR = new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+
+    const unidadeInput = document.getElementById('unidade');
+    const valorInput = document.getElementById('valorUnitario');
+    const subtotalPreview = document.getElementById('subtotalPreview');
+
+    document.getElementById('dataControle').valueAsDate = new Date();
+
+    unidadeInput.addEventListener('input', atualizarSubtotalPreview);
+    valorInput.addEventListener('input', atualizarSubtotalPreview);
+
+    ['nomeControle', 'tipoGasto', 'dataControle', 'observacao'].forEach(id => {
+      document.getElementById(id).addEventListener('input', atualizarInfoControle);
+    });
+
+    function atualizarSubtotalPreview() {
+      const unidade = Number(unidadeInput.value) || 0;
+      const valor = Number(valorInput.value) || 0;
+      subtotalPreview.value = moedaBR.format(unidade * valor);
+    }
+
+    function adicionarItem() {
+      const unidade = Number(document.getElementById('unidade').value);
+      const produto = document.getElementById('produto').value.trim();
+      const valorUnitario = Number(document.getElementById('valorUnitario').value);
+
+      if (!unidade || unidade <= 0) {
+        alert('Informe a unidade corretamente.');
+        return;
+      }
+
+      if (!produto) {
+        alert('Informe o nome do produto.');
+        return;
+      }
+
+      if (isNaN(valorUnitario) || valorUnitario < 0) {
+        alert('Informe o valor unitário corretamente.');
+        return;
+      }
+
+      const item = {
+        id: Date.now(),
+        unidade,
+        produto,
+        valorUnitario,
+        subtotal: unidade * valorUnitario
+      };
+
+      itens.push(item);
+      salvarDados();
+      renderizarTabela();
+      limparCamposProduto();
+    }
+
+    function removerItem(id) {
+      if (!confirm('Deseja remover este item?')) return;
+      itens = itens.filter(item => item.id !== id);
+      salvarDados();
+      renderizarTabela();
+    }
+
+    function limparCamposProduto() {
+      document.getElementById('unidade').value = '';
+      document.getElementById('produto').value = '';
+      document.getElementById('valorUnitario').value = '';
+      subtotalPreview.value = '';
+      document.getElementById('unidade').focus();
+    }
+
+    function limparTudo() {
+      if (!confirm('Tem certeza que deseja apagar todos os produtos cadastrados?')) return;
+      itens = [];
+      salvarDados();
+      renderizarTabela();
+    }
+
+    function salvarDados() {
+      localStorage.setItem('controleGastosItens', JSON.stringify(itens));
+    }
+
+    function atualizarInfoControle() {
+      const nome = document.getElementById('nomeControle').value.trim() || 'Tabela de Gastos';
+      const tipo = document.getElementById('tipoGasto').value;
+      const data = document.getElementById('dataControle').value;
+      const obs = document.getElementById('observacao').value.trim();
+
+      document.getElementById('tituloTabela').textContent = nome;
+
+      let texto = `Tipo: ${tipo}`;
+      if (data) texto += ` | Data: ${formatarData(data)}`;
+      if (obs) texto += ` | Observação: ${obs}`;
+
+      document.getElementById('infoControle').textContent = texto;
+    }
+
+    function formatarData(dataISO) {
+      const [ano, mes, dia] = dataISO.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    function renderizarTabela() {
+      const conteudo = document.getElementById('conteudoTabela');
+      const total = itens.reduce((soma, item) => soma + item.subtotal, 0);
+
+      document.getElementById('totalGeral').textContent = moedaBR.format(total);
+
+      if (itens.length === 0) {
+        conteudo.innerHTML = '<div class="empty">Nenhum produto cadastrado ainda.</div>';
+        return;
+      }
+
+      let linhas = itens.map((item, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${item.unidade}</td>
+          <td>${item.produto}</td>
+          <td>${moedaBR.format(item.valorUnitario)}</td>
+          <td>${moedaBR.format(item.subtotal)}</td>
+          <td class="actions-col">
+            <button class="danger" onclick="removerItem(${item.id})">Remover</button>
+          </td>
+        </tr>
+      `).join('');
+
+      conteudo.innerHTML = `
+        <div class="table-area">
+          <table>
+            <thead>
+              <tr>
+                <th>Nº</th>
+                <th>UND</th>
+                <th>PRODUTO</th>
+                <th>UNITÁRIO</th>
+                <th>SUBTOTAL</th>
+                <th class="actions-col">AÇÃO</th>
+              </tr>
+            </thead>
+            <tbody>${linhas}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    async function exportarImagem() {
+      const area = document.getElementById('areaExportacao');
+      const canvas = await html2canvas(area, {
+        scale: 2,
+        backgroundColor: '#ffffff'
+      });
+
+      const link = document.createElement('a');
+      link.download = 'controle-de-gastos.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    async function exportarPDF() {
+      const area = document.getElementById('areaExportacao');
+      const canvas = await html2canvas(area, {
+        scale: 2,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save('controle-de-gastos.pdf');
+    }
+
+    atualizarInfoControle();
+    renderizarTabela();
+  </script>
+</body>
+</html>
